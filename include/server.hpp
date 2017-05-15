@@ -52,6 +52,7 @@ public:
 
     bool set_max_wait_connections(unsigned int connections);
     unsigned int get_max_wait_connections();
+
 public:
     void run();
 };

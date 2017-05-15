@@ -5,6 +5,10 @@
 #include "server.hpp"
 
 
+//TODO remove
+#include <iostream>
+
+
 namespace rest {
 namespace server {
 
@@ -116,10 +120,26 @@ void RestSrv::run()
         if(client_socket < 0) 
             throw std::exception();
 
-/*            char buff[1024];
-            if(recv(newsockfd, buff, sizeof(buff), 0) > 0)
+            char buff[4096];
+            if(recv(client_socket, buff, sizeof(buff), 0) > 0)
             {
-                Json::Value data;
+                std::cout << buff << std::endl;
+
+                char reply[] = 
+                "HTTP/1.1 200 OK\n"
+                "Date: Thu, 19 Feb 2009 12:27:04 GMT\n"
+                "Server: Apache/2.2.3\n"
+                "Last-Modified: Wed, 18 Jun 2003 16:05:58 GMT\n"
+                "ETag: \"56d-9989200-1132c580\"\n"
+                "Content-Type: text/html\n"
+                "Content-Length: 15\n"
+                "Accept-Ranges: bytes\n"
+                "Connection: close\n"
+                "\n"
+                "test response\n";
+
+                send(client_socket, reply, sizeof(reply), 0);
+/*                Json::Value data;
                 
                 Json::Reader reader;
                 if(!reader.parse(buff, data))
@@ -137,8 +157,8 @@ void RestSrv::run()
                         std::cout << "Otrzymałem podejrzaną decyzję!" << std::endl;
                 }
                 else
-                    secret = data;
-            }*/
+                    secret = data;*/
+            }
     };
 };
 
