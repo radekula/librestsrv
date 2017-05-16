@@ -10,12 +10,13 @@
 #ifndef __LIBRESTSRV_SERVER_HPP__
 #define __LIBRESTSRV_SERVER_HPP__
 
-//#include <sys/types.h>
-//#include <sys/socket.h>
-//#include <netdb.h> 
-
 #include <netinet/in.h>
-
+#include <vector>
+#include <memory>
+#include <functional>
+#include "client.hpp"
+#include "request.hpp"
+#include "response.hpp"
 
 
 
@@ -29,7 +30,7 @@ class RestSrv
 {
 private:
     bool m_is_running;
-    
+
 private:
     int m_address_type;
     int m_listen_port;
@@ -38,9 +39,18 @@ private:
 private:
     int m_listen_socket;
     sockaddr_in m_listen_address;
+    std::function<void(rest::server::RestRequest&, rest::server::RestResponse&)> m_handler_fun;
+
+private:
+    std::vector<std::shared_ptr<RestClient>> m_clients;
+
+public:
+    static std::string format_response(RestResponse &response);
+    static std::string http_code_to_string(unsigned int code);
 
 public:
     RestSrv();
+    RestSrv(std::function<void(rest::server::RestRequest&, rest::server::RestResponse&)> fun);
     ~RestSrv();
 
 public:
@@ -52,6 +62,9 @@ public:
 
     bool set_max_wait_connections(unsigned int connections);
     unsigned int get_max_wait_connections();
+
+public:
+    void register_function(std::function<void(rest::server::RestRequest&, rest::server::RestResponse&)> fun);
 
 public:
     void run();

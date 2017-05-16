@@ -3,14 +3,15 @@
 #include <unistd.h>
 #include "global.hpp"
 #include "server.hpp"
+#include "response.hpp"
+#include "logger.hpp"
 
-
-//TODO remove
-#include <iostream>
 
 
 namespace rest {
 namespace server {
+
+
 
 
 RestSrv::RestSrv()
@@ -21,7 +22,22 @@ RestSrv::RestSrv()
     m_address_type = ADDR_IPV4;
     m_listen_port = 80;
     m_max_wait_connections = 0;
+    m_handler_fun = nullptr;
 };
+
+
+
+
+RestSrv::RestSrv(std::function<void(rest::server::RestRequest&, rest::server::RestResponse&)> fun)
+{
+    m_is_running = false;
+
+    m_listen_socket = 0;
+    m_address_type = ADDR_IPV4;
+    m_listen_port = 80;
+    m_max_wait_connections = 0;
+    m_handler_fun = fun;
+}
 
 
 
@@ -92,74 +108,132 @@ unsigned int RestSrv::get_max_wait_connections()
 
 
 
+std::string RestSrv::http_code_to_string(unsigned int code)
+{
+    std::string out;
+
+    switch(code)
+    {
+        case 200:
+            out = "200 OK";
+            break;
+    }
+
+    return out;
+}
+
+
+
+
+
+std::string RestSrv::format_response(RestResponse &response)
+{
+    std::string out;
+
+    out = std::string("HTTP/1.1 ") + RestSrv::http_code_to_string(response.get_http_code()) + "\n"
+          + "Date: Thu, 19 Feb 2009 12:27:04 GMT\n"
+          + "Server: Apache/2.2.3\n"
+          + "Last-Modified: Wed, 18 Jun 2003 16:05:58 GMT\n"
+          + "ETag: \"56d-9989200-1132c580\"\n"
+          + response.get_content_type() + "\n"
+          + "Content-Length: " + std::to_string(response.get_message().size()) + "\n"
+          + "Accept-Ranges: bytes\n"
+          + "Connection: close\n"
+          + "\n"
+          + response.get_message();
+
+    return out;
+}
+
+
+
+void RestSrv::register_function(std::function<void(rest::server::RestRequest&, rest::server::RestResponse&)> fun)
+{
+    m_handler_fun = fun;
+};
+
+
+
+
 void RestSrv::run()
 {
-    m_listen_socket = socket(AF_INET, SOCK_STREAM, 0);
-
-    if(m_listen_socket < 0)
-        throw std::exception();
-
-    memset((char *) &m_listen_address, 0, sizeof(m_listen_address));
-    m_listen_address.sin_family = m_address_type;
-//TODO: defining addresses to listen to
-    m_listen_address.sin_addr.s_addr = INADDR_ANY;
-    m_listen_address.sin_port = htons(m_listen_port);
-
-    if(bind(m_listen_socket, (struct sockaddr *) &m_listen_address, sizeof(m_listen_address)) < 0)
-        throw std::exception();
-
-    if(listen(m_listen_socket, m_max_wait_connections) < 0)
-        throw std::exception();
-
-    while(true)
+    Logger::get().log(NOTICE, "Server started");
+    try
     {
-        sockaddr_in client_address;
-        socklen_t m_clilen = sizeof(client_address);
+        m_is_running = true;
 
-        auto client_socket = accept(m_listen_socket, (struct sockaddr *) &client_address, &m_clilen);
-        if(client_socket < 0) 
+        m_listen_socket = socket(AF_INET, SOCK_STREAM, 0);
+
+        if(m_listen_socket < 0)
+        {
+            Logger::get().log(ERROR , "Error creating socket");
             throw std::exception();
+        }
+
+        memset((char *) &m_listen_address, 0, sizeof(m_listen_address));
+        m_listen_address.sin_family = m_address_type;
+//TODO: defining addresses to listen to
+        m_listen_address.sin_addr.s_addr = INADDR_ANY;
+        m_listen_address.sin_port = htons(m_listen_port);
+
+        if(bind(m_listen_socket, (struct sockaddr *) &m_listen_address, sizeof(m_listen_address)) < 0)
+        {
+            Logger::get().log(ERROR , "Error binding to socket");
+            throw std::exception();
+        }
+
+        if(listen(m_listen_socket, m_max_wait_connections) < 0)
+        {
+            Logger::get().log(ERROR , "Error listen on socket");
+            throw std::exception();
+        }
+
+        while(true)
+        {
+            std::shared_ptr<RestClient> new_client = std::make_shared<RestClient>();
+
+            new_client->set_socket(accept(m_listen_socket, (struct sockaddr *) new_client->get_address(), new_client->get_address_size()));
+            if(new_client->get_socket() < 0)
+            {
+                Logger::get().log(ERROR , "Error listen on socket");
+                throw std::exception();
+            }
+
+            Logger::get().log(NOTICE, "New client connected");
 
             char buff[4096];
-            if(recv(client_socket, buff, sizeof(buff), 0) > 0)
+            recv(new_client->get_socket(), buff, sizeof(buff), 0);
+
+            RestRequest request;
+            RestResponse response;
+
+            if(m_handler_fun)
             {
-                std::cout << buff << std::endl;
-
-                char reply[] = 
-                "HTTP/1.1 200 OK\n"
-                "Date: Thu, 19 Feb 2009 12:27:04 GMT\n"
-                "Server: Apache/2.2.3\n"
-                "Last-Modified: Wed, 18 Jun 2003 16:05:58 GMT\n"
-                "ETag: \"56d-9989200-1132c580\"\n"
-                "Content-Type: text/html\n"
-                "Content-Length: 15\n"
-                "Accept-Ranges: bytes\n"
-                "Connection: close\n"
-                "\n"
-                "test response\n";
-
-                send(client_socket, reply, sizeof(reply), 0);
-/*                Json::Value data;
-                
-                Json::Reader reader;
-                if(!reader.parse(buff, data))
-                {
-                    std::cout << "Błąd akceptowania" << std::endl;
-                    continue;
-                }
-
-                if(data.isMember("decision"))
-                {
-                    real = data;
-                    if(verify())
-                        std::cout << "Otrzymałem zweryfikowaną decyzję." << std::endl;
-                    else
-                        std::cout << "Otrzymałem podejrzaną decyzję!" << std::endl;
-                }
-                else
-                    secret = data;*/
+                Logger::get().log(NOTICE, "Running handler");
+                m_handler_fun(request, response);
             }
+            else
+            {
+                Logger::get().log(WARNING, "Handler function was not defined");
+                response.set_http_code(200);
+                response.set_message("test message");
+            };
+
+            auto server_response = format_response(response);
+
+            Logger::get().log(NOTICE, "Sending responce");
+            if(send(new_client->get_socket(), server_response.c_str(), server_response.size(), 0) < 0)
+                throw std::exception();
+
+        };
+    } 
+    catch(std::exception e) 
+    {
+        m_is_running = false;
+        throw e;
     };
+
+    m_is_running = false;
 };
 
 
