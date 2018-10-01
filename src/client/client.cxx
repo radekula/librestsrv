@@ -37,6 +37,7 @@ RestClient::~RestClient()
 bool RestClient::set_socket(int socket)
 {
     m_listen_socket = socket;
+    return true;
 };
 
 

@@ -6,5 +6,6 @@
  *
  */
 
-#include "server.hpp"
-#include "client.hpp"
+#include "server/server.hpp"
+#include "client/client.hpp"
+#include "log/logger.hpp"

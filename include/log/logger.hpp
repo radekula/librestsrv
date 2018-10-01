@@ -17,7 +17,16 @@
 
 
 namespace rest {
-namespace server {
+namespace log {
+
+
+typedef enum
+{
+    STDOUT,
+    STDERR,
+    FILE
+} LOG_OUTPUT;
+
 
 
 typedef enum
@@ -40,7 +49,7 @@ public:
     static Logger& get();
 
 public:
-    void log(int log_level, std::string message);
+    int log(int log_level, std::string message);
 };
 
 

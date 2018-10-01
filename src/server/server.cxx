@@ -4,7 +4,7 @@
 #include "global.hpp"
 #include "server.hpp"
 #include "response.hpp"
-#include "logger.hpp"
+#include "log/logger.hpp"
 
 
 
@@ -57,6 +57,8 @@ bool RestSrv::set_addr_type(int type)
         return false;
 
     m_address_type = type;
+
+    return true;
 };
 
 
@@ -76,6 +78,8 @@ bool RestSrv::set_port(unsigned int port)
         return false;
 
     m_listen_port = port;
+
+    return true;
 };
 
 
@@ -95,6 +99,8 @@ bool RestSrv::set_max_wait_connections(unsigned int connections)
         return false;
 
     m_max_wait_connections = connections;
+
+    return true;
 };
 
 
@@ -157,7 +163,7 @@ void RestSrv::register_function(std::function<void(rest::server::RestRequest&, r
 
 void RestSrv::run()
 {
-    Logger::get().log(NOTICE, "Server started");
+    rest::log::Logger::get().log(rest::log::NOTICE, "Server started");
     try
     {
         m_is_running = true;
@@ -166,7 +172,7 @@ void RestSrv::run()
 
         if(m_listen_socket < 0)
         {
-            Logger::get().log(ERROR , "Error creating socket");
+            rest::log::Logger::get().log(rest::log::ERROR , "Error creating socket");
             throw std::exception();
         }
 
@@ -178,13 +184,13 @@ void RestSrv::run()
 
         if(bind(m_listen_socket, (struct sockaddr *) &m_listen_address, sizeof(m_listen_address)) < 0)
         {
-            Logger::get().log(ERROR , "Error binding to socket");
+            rest::log::Logger::get().log(rest::log::ERROR , "Error binding to socket");
             throw std::exception();
         }
 
         if(listen(m_listen_socket, m_max_wait_connections) < 0)
         {
-            Logger::get().log(ERROR , "Error listen on socket");
+            rest::log::Logger::get().log(rest::log::ERROR , "Error listen on socket");
             throw std::exception();
         }
 
@@ -195,11 +201,11 @@ void RestSrv::run()
             new_client->set_socket(accept(m_listen_socket, (struct sockaddr *) new_client->get_address(), new_client->get_address_size()));
             if(new_client->get_socket() < 0)
             {
-                Logger::get().log(ERROR , "Error listen on socket");
+                rest::log::Logger::get().log(rest::log::ERROR , "Error listen on socket");
                 throw std::exception();
             }
 
-            Logger::get().log(NOTICE, "New client connected");
+            rest::log::Logger::get().log(rest::log::NOTICE, "New client connected");
 
             char buff[4096];
             recv(new_client->get_socket(), buff, sizeof(buff), 0);
@@ -209,19 +215,19 @@ void RestSrv::run()
 
             if(m_handler_fun)
             {
-                Logger::get().log(NOTICE, "Running handler");
+                rest::log::Logger::get().log(rest::log::NOTICE, "Running handler");
                 m_handler_fun(request, response);
             }
             else
             {
-                Logger::get().log(WARNING, "Handler function was not defined");
+                rest::log::Logger::get().log(rest::log::WARNING, "Handler function was not defined");
                 response.set_http_code(200);
                 response.set_message("test message");
             };
 
             auto server_response = format_response(response);
 
-            Logger::get().log(NOTICE, "Sending responce");
+            rest::log::Logger::get().log(rest::log::NOTICE, "Sending responce");
             if(send(new_client->get_socket(), server_response.c_str(), server_response.size(), 0) < 0)
                 throw std::exception();
 

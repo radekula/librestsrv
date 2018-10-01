@@ -25,7 +25,13 @@ link_directories(${JSONCPP_LIBRARY_DIRS})
 link_libraries(${JSONCPP_LIBRARIES})
 
 include_directories (${CMAKE_CURRENT_LIST_DIR}/include)
+include_directories (${CMAKE_CURRENT_LIST_DIR}/include/client)
+include_directories (${CMAKE_CURRENT_LIST_DIR}/include/error)
+include_directories (${CMAKE_CURRENT_LIST_DIR}/include/global)
+include_directories (${CMAKE_CURRENT_LIST_DIR}/include/log)
+include_directories (${CMAKE_CURRENT_LIST_DIR}/include/server)
 
-file (GLOB LIB_RESTSRV_SRC "src/*.cxx")
+file (GLOB LIB_RESTSRV_SRC "src/client/*.cxx" "src/log/*.cxx" "src/server/*.cxx")
+
 add_library (restsrv SHARED ${LIB_RESTSRV_SRC})
 add_library (restsrv_static STATIC ${LIB_RESTSRV_SRC})

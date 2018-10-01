@@ -12,7 +12,7 @@
 
 
 namespace rest {
-namespace server {
+namespace log {
 
 
 
@@ -40,9 +40,12 @@ Logger& Logger::get()
 
 
 
-void Logger::log(int log_level, std::string message)
+
+int Logger::log(int log_level, std::string message)
 {
     std::cout << message << std::endl;
+
+    return 0;
 };
 
 
