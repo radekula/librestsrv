@@ -126,6 +126,12 @@ std::string RestSrv::http_code_to_string(unsigned int code)
         case 200:
             out = "200 OK";
             break;
+        case 404:
+            out = "404 Not Found";
+            break;
+        case 405:
+            out = "405 Method Not Allowed";
+            break;
     }
 
     return out;
@@ -149,7 +155,7 @@ std::string RestSrv::format_response(RestResponse &response)
           + "Accept-Ranges: bytes\n"
           + "Connection: close\n"
           + "\n"
-          + response.get_message();
+          + (response.get_message().size() ? response.get_message() : "");
 
     return out;
 }
@@ -233,6 +239,7 @@ void RestSrv::run()
 
                 std::this_thread::sleep_for(std::chrono::milliseconds(10));
             }
+            request.parse();
 
             if(m_handler_fun)
             {
