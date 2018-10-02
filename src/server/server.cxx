@@ -1,6 +1,9 @@
 #include <exception>
 #include <cstring>
 #include <unistd.h>
+#include <fcntl.h>
+#include <thread>
+#include <chrono>
 #include "global.hpp"
 #include "server.hpp"
 #include "response.hpp"
@@ -204,14 +207,32 @@ void RestSrv::run()
                 rest::log::Logger::get().log(rest::log::ERROR , "Error listen on socket");
                 throw std::exception();
             }
-
+            fcntl(new_client->get_socket(), F_SETFL, O_NONBLOCK);
             rest::log::Logger::get().log(rest::log::NOTICE, "New client connected");
-
-            char buff[4096];
-            recv(new_client->get_socket(), buff, sizeof(buff), 0);
 
             RestRequest request;
             RestResponse response;
+
+            // Read data from socket until timeout occurs:
+            char buff[4096];
+            auto last_data = std::chrono::high_resolution_clock::now();
+            while(1)
+            {
+                memset(buff, 0, sizeof(buff));
+                auto size = recv(new_client->get_socket(), buff, sizeof(buff), 0);
+                auto now = std::chrono::high_resolution_clock::now();
+
+                if(size < 0 && std::chrono::duration_cast<std::chrono::milliseconds>(now - last_data).count() > 20)
+                    break;
+
+                if(size > 0)
+                {
+                    request.append_data(buff, size);
+                    last_data = now;
+                }
+
+                std::this_thread::sleep_for(std::chrono::milliseconds(10));
+            }
 
             if(m_handler_fun)
             {
