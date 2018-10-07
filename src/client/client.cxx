@@ -8,6 +8,7 @@
 
 
 #include <netinet/in.h>
+#include <unistd.h>
 #include "client.hpp"
 
 
@@ -29,6 +30,8 @@ RestClient::RestClient()
 
 RestClient::~RestClient()
 {
+    if(m_listen_socket)
+        close(m_listen_socket);
 };
 
 
