@@ -26,6 +26,8 @@ RestSrv::RestSrv()
     m_listen_port = 80;
     m_max_wait_connections = 0;
     m_handler_fun = nullptr;
+
+    m_server_name = "librestsrv";
 };
 
 
@@ -40,6 +42,8 @@ RestSrv::RestSrv(std::function<void(rest::server::RestRequest&, rest::server::Re
     m_listen_port = 80;
     m_max_wait_connections = 0;
     m_handler_fun = fun;
+
+    m_server_name = "librestsrv";
 }
 
 
@@ -117,6 +121,24 @@ unsigned int RestSrv::get_max_wait_connections()
 
 
 
+bool RestSrv::set_server_name(std::string server_name)
+{
+    m_server_name = server_name;
+
+    return true;
+};
+
+
+
+
+std::string RestSrv::get_server_name()
+{
+    return m_server_name;
+};
+
+
+
+
 std::string RestSrv::http_code_to_string(unsigned int code)
 {
     std::string out;
@@ -140,14 +162,14 @@ std::string RestSrv::http_code_to_string(unsigned int code)
 
 
 
-
+//TODO: all response headers should be generated
 std::string RestSrv::format_response(RestResponse &response)
 {
     std::string out;
 
-    out = std::string("HTTP/1.1 ") + RestSrv::http_code_to_string(response.get_http_code()) + "\n"
+    out = std::string("HTTP/1.1 ") + http_code_to_string(response.get_http_code()) + "\n"
           + "Date: Thu, 19 Feb 2009 12:27:04 GMT\n"
-          + "Server: Apache/2.2.3\n"
+          + "Server: " + m_server_name + "\n"
           + "Last-Modified: Wed, 18 Jun 2003 16:05:58 GMT\n"
           + "ETag: \"56d-9989200-1132c580\"\n"
           + response.get_content_type() + "\n"
@@ -166,7 +188,6 @@ void RestSrv::register_function(std::function<void(rest::server::RestRequest&, r
 {
     m_handler_fun = fun;
 };
-
 
 
 
@@ -260,8 +281,8 @@ void RestSrv::run()
                 throw std::exception();
 
         };
-    } 
-    catch(std::exception e) 
+    }
+    catch(std::exception e)
     {
         m_is_running = false;
         throw e;

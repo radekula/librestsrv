@@ -44,9 +44,12 @@ private:
 private:
     std::vector<std::shared_ptr<RestClient>> m_clients;
 
+private:
+    std::string m_server_name;
+
 public:
-    static std::string format_response(RestResponse &response);
-    static std::string http_code_to_string(unsigned int code);
+    std::string format_response(RestResponse &response);
+    std::string http_code_to_string(unsigned int code);
 
 public:
     RestSrv();
@@ -62,6 +65,9 @@ public:
 
     bool set_max_wait_connections(unsigned int connections);
     unsigned int get_max_wait_connections();
+
+    bool set_server_name(std::string server_name);
+    std::string get_server_name();
 
 public:
     void register_function(std::function<void(rest::server::RestRequest&, rest::server::RestResponse&)> fun);
