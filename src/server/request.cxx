@@ -40,7 +40,7 @@ void RestRequest::append_data(void *data, size_t size)
     char *buff = new char[size + 1];
     memcpy(buff, data, size);
     buff[size] = 0;
-    
+
     m_message.append(buff);
 };
 
@@ -69,7 +69,7 @@ void RestRequest::parse_headers(std::istringstream &data_stream)
         delimiter++;
         while(line[delimiter] == ' ')
             delimiter++;
-        
+
         auto value = line.substr(delimiter);
         m_headers[name] = value; 
     }
@@ -116,7 +116,7 @@ void RestRequest::parse()
 
     // parse header first
     std::string line;
-    
+
     // first line must contain method, resource and protocol
     std::getline(data_stream, line);
     std::istringstream req(line);

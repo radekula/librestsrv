@@ -214,7 +214,6 @@ void RestSrv::run()
                 throw std::exception();
             }
             fcntl(new_client->get_socket(), F_SETFL, O_NONBLOCK);
-            rest::log::Logger::get().log(rest::log::NOTICE, "New client connected");
 
             RestRequest request;
             RestResponse response;
@@ -243,7 +242,6 @@ void RestSrv::run()
 
             if(m_handler_fun)
             {
-                rest::log::Logger::get().log(rest::log::NOTICE, "Running handler");
                 m_handler_fun(request, response);
             }
             else
@@ -255,7 +253,6 @@ void RestSrv::run()
 
             auto server_response = format_response(response);
 
-            rest::log::Logger::get().log(rest::log::NOTICE, "Sending responce");
             if(send(new_client->get_socket(), server_response.c_str(), server_response.size(), 0) < 0)
                 throw std::exception();
 
