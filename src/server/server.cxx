@@ -24,7 +24,7 @@ RestSrv::RestSrv()
     m_listen_socket = 0;
     m_address_type = ADDR_IPV4;
     m_listen_port = 80;
-    m_max_wait_connections = 0;
+    m_max_wait_connections = 256;
     m_handler_fun = nullptr;
 };
 
@@ -38,7 +38,7 @@ RestSrv::RestSrv(std::function<void(rest::server::RestRequest&, rest::server::Re
     m_listen_socket = 0;
     m_address_type = ADDR_IPV4;
     m_listen_port = 80;
-    m_max_wait_connections = 0;
+    m_max_wait_connections = 256;
     m_handler_fun = fun;
 }
 
