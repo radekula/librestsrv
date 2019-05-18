@@ -227,7 +227,7 @@ void RestSrv::run()
                 auto size = recv(new_client->get_socket(), buff, sizeof(buff), 0);
                 auto now = std::chrono::high_resolution_clock::now();
 
-                if(size < 0 && std::chrono::duration_cast<std::chrono::milliseconds>(now - last_data).count() > 20)
+                if(size <= 0 && std::chrono::duration_cast<std::chrono::milliseconds>(now - last_data).count() > 20)
                     break;
 
                 if(size > 0)
