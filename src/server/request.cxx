@@ -91,7 +91,6 @@ void RestRequest::parse_body(std::istringstream &data_stream)
     builder["collectComments"] = false;
 
     auto success = Json::parseFromStream(builder, data_stream, &m_body, &errs);
-rest::log::Logger::get().log(rest::log::DEBUG, errs);
     if(!success)
         rest::log::Logger::get().log(rest::log::DEBUG, "Error parsing body");
 
